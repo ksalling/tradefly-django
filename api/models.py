@@ -3,7 +3,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 #from fernet_fields import EncryptedCharField
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from django_crypto_fields.fields import EncryptedTextField
+#from django_crypto_fields.fields import EncryptedTextField
 
 auth_user = get_user_model()
 
@@ -87,8 +87,8 @@ class UserProfile(models.Model):
 class UserApi(models.Model):
     auth_user = models.ForeignKey(auth_user, on_delete=models.CASCADE, db_column='auth_user_id', blank=True, null=True)
     exchange = models.ForeignKey(SupportedExchange, on_delete=models.CASCADE, db_column='exchange_id', blank=True, null=True)
-    api_key = EncryptedTextField(max_length=255, null=True)
-    api_secret = EncryptedTextField(max_length=255, null=True)
+    #api_key = EncryptedTextField(max_length=255, null=True)
+    #api_secret = EncryptedTextField(max_length=255, null=True)
     #api_key = models.CharField(max_length=255, null=True)
     #api_secret = models.CharField(max_length=255, null=True)
 
