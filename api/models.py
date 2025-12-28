@@ -89,8 +89,8 @@ class UserApi(models.Model):
     exchange = models.ForeignKey(SupportedExchange, on_delete=models.CASCADE, db_column='exchange_id', blank=True, null=True)
     #api_key = EncryptedTextField(max_length=255, null=True)
     #api_secret = EncryptedTextField(max_length=255, null=True)
-    #api_key = models.CharField(max_length=255, null=True)
-    #api_secret = models.CharField(max_length=255, null=True)
+    api_key = models.CharField(max_length=255, null=True)
+    api_secret = models.CharField(max_length=255, null=True)
 
     class Meta:
         db_table = 'user_api'

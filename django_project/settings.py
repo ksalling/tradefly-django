@@ -26,6 +26,7 @@ os.makedirs(LOGS_DIR, exist_ok=True)
 load_dotenv(BASE_DIR / '.env')
 
 #DJANGO_CRYPTO_FIELDS_KEY_PATH = BASE_DIR / 'crypto'
+#DJANGO_CRYPTO_FIELDS_KEY_PATH = '/home/kyle/crypto'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -52,7 +53,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'api',
     'rest_framework',
-    'django_crypto_fields.apps.AppConfig',
 ]
 
 MIDDLEWARE = [
