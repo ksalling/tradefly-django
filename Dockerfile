@@ -43,14 +43,16 @@ ENV PATH="/app/.venv/bin:$PATH"
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
 
+# Make entry file executable
+RUN chmod +rx  /app/entrypoint.prod.sh
+
 # Use the non-root user to run our application
 USER nonroot
 
 # Expose the application port
 EXPOSE 8000 
 
-# Make entry file executable
-RUN chmod +rx  /app/entrypoint.prod.sh
+
 #python manage.py collectstatic --noinput \ python manage.py migrate --noinput \ 
 
 # Start the application using Gunicorn
