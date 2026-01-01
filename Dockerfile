@@ -53,4 +53,5 @@ EXPOSE 8000
 #python manage.py collectstatic --noinput \ python manage.py migrate --noinput \ 
 
 # Start the application using Gunicorn
-CMD ["python3 -m gunicorn --bind 0.0.0.0:8000 --workers 3 django_project.wsgi:application"]
+CMD ["/app/entrypoint.prod.sh"]
+#CMD ["python3 -m gunicorn --bind 0.0.0.0:8000 --workers 3 django_project.wsgi:application"]
