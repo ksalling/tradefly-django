@@ -16,4 +16,5 @@ dependencies = [
     "pydantic>=2.12.5",
     "python-decouple>=3.8",
     "python-dotenv>=1.2.1",
+    "whitenoise>=6.11.0",
 ]

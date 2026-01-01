@@ -162,3 +162,5 @@ urllib3==2.6.2
     #   requests
 websockets==15.0.1
     # via google-genai
+whitenoise==6.11.0
+    # via django-project (pyproject.toml)
