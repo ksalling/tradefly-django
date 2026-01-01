@@ -50,7 +50,7 @@ USER nonroot
 EXPOSE 8000 
 
 # Make entry file executable
-#RUN chmod +x  /app/entrypoint.prod.sh
+RUN chmod +rx  /app/entrypoint.prod.sh
 #python manage.py collectstatic --noinput \ python manage.py migrate --noinput \ 
 
 # Start the application using Gunicorn
