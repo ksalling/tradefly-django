@@ -2,8 +2,12 @@
 FROM ghcr.io/astral-sh/uv:python3.14-alpine
 
 # Setup a non-root user
-RUN groupadd --system --gid 999 nonroot \
- && useradd --system --gid 999 --uid 999 --create-home nonroot
+#RUN groupadd --system --gid 999 nonroot \
+# && useradd --system --gid 999 --uid 999 --create-home nonroot
+
+RUN useradd -m -r appuser && \
+   mkdir /app && \
+   chown -R appuser /app
 
 # Install the project into `/app`
 WORKDIR /app
