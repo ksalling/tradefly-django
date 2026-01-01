@@ -15,7 +15,7 @@ DATABASES = {
         'NAME': 'tf',
         'USER': 'tradefly',
         'PASSWORD': '6817*erxesAve',
-        'HOST': 'tradefly-tradefly-6oc18b',
+        'HOST': 'mg0wss80kg8c0cks4skckc44:5432/postgres',
         'PORT': '5432',
     }
 }
