@@ -12,11 +12,11 @@ CSRF_TRUSTED_ORIGINS = ${{DJANGO_CSRF_TRUSTED_ORIGINS}}
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': ${{DB_NAME}},
-        'USER': ${{DB_USER}},
-        'PASSWORD': ${{DB_PASSWORD}},
-        'HOST': ${{DB_HOST}},
-        'PORT': ${{DB_PORT}},
+        'NAME': 'tf',
+        'USER': 'tradefly',
+        'PASSWORD': '6817*erxesAve',
+        'HOST': 'tradefly-tradefly-6oc18b',
+        'PORT': 5432,
     }
 }
 
