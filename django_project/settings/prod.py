@@ -1,7 +1,7 @@
 from .base import *
 
 # Development-specific settings
-DEBUG = False
+DEBUG = True
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = ${{SECRET_KEY}}
