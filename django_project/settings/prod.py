@@ -10,13 +10,17 @@ ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = "http://localhost:8282"
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'tf',
-        'USER': 'tradefly',
-        'PASSWORD': '6817*erxesAve',
-        'HOST': 'mg0wss80kg8c0cks4skckc44:5432/postgres',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.parse(config('DATABASE_URL'))
 }
+
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.postgresql',
+#        'NAME': 'tf',
+#        'USER': 'tradefly',
+#        'PASSWORD': '6817*erxesAve',
+#        'HOST': 'mg0wss80kg8c0cks4skckc44:5432/postgres',
+#        'PORT': '5432',
+#    }
+#}
 

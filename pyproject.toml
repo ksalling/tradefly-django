@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "boto3>=1.42.16",
+    "dj-database-url>=3.0.1",
     "django>=6.0",
     "djangorestframework>=3.16.1",
     "google-genai>=1.56.0",
@@ -13,5 +14,6 @@ dependencies = [
     "gunicorn>=23.0.0",
     "psycopg2-binary>=2.9.11",
     "pydantic>=2.12.5",
+    "python-decouple>=3.8",
     "python-dotenv>=1.2.1",
 ]

@@ -25,9 +25,12 @@ charset-normalizer==3.4.4
     # via requests
 distro==1.9.0
     # via google-genai
+dj-database-url==3.0.1
+    # via django-project (pyproject.toml)
 django==6.0
     # via
     #   django-project (pyproject.toml)
+    #   dj-database-url
     #   djangorestframework
 djangorestframework==3.16.1
     # via django-project (pyproject.toml)
@@ -118,6 +121,8 @@ pyparsing==3.3.1
     # via httplib2
 python-dateutil==2.9.0.post0
     # via botocore
+python-decouple==3.8
+    # via django-project (pyproject.toml)
 python-dotenv==1.2.1
     # via django-project (pyproject.toml)
 requests==2.32.5
