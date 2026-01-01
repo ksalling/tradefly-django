@@ -49,7 +49,7 @@ USER nonroot
 EXPOSE 8000 
 
 # Make entry file executable
-RUN chmod +x  /app/entrypoint.prod.sh
- 
+#RUN chmod +x  /app/entrypoint.prod.sh
+
 # Start the application using Gunicorn
-CMD ["/app/entrypoint.prod.sh"]
+CMD ["python manage.py collectstatic --noinput \ python manage.py migrate --noinput \ gunicorn -m gunicorn --bind 0.0.0.0:8000 --workers 3 django_project.wsgi:application"]
