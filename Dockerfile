@@ -21,6 +21,8 @@ FROM python:3.14-slim
  
 RUN useradd -m -r appuser && \
    mkdir /app && \
+   mkdir /app/static && \
+   mkdir /app/logs && \
    chown -R appuser /app
  
 # Copy the Python dependencies from the builder stage
