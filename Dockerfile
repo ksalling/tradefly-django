@@ -1,5 +1,8 @@
 # Stage 1: Base build stage
 FROM python:3.14-slim AS builder
+
+# Install nano and other packages
+RUN apt-get update && apt-get install -y nano
  
 # Create the app directory
 RUN mkdir /app

@@ -20,7 +20,7 @@ from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Create logs directory
-LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+LOGS_DIR = os.path.join(BASE_DIR.parent, 'logs')
 os.makedirs(LOGS_DIR, exist_ok=True)
 
 # Load environment variables from .env file
