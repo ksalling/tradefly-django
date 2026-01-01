@@ -7,7 +7,7 @@ DEBUG = True
 SECRET_KEY = "django-insecure-w#8yes#)v!3j3%-_5lzq#)ovvaw$wy8o%+orb0d68n!41b%7kb"
 
 ALLOWED_HOSTS = ["localhost"]
-CSRF_TRUSTED_ORIGINS = "http://localhost:8000"
+CSRF_TRUSTED_ORIGINS = "http://localhost:8282"
 
 DATABASES = {
     'default': {
