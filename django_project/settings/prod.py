@@ -14,8 +14,6 @@ DATABASES = {
     'default': dj_database_url.parse(config('DATABASE_URL'))
 }
 
-STATIC_URL = 'django_project/static/'
-
 #DATABASES = {
 #    'default': {
 #        'ENGINE': 'django.db.backends.postgresql',

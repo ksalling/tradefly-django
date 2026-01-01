@@ -9,7 +9,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS','127.0.0.1').split(' ')
 CSRF_TRUSTED_ORIGINS = os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS','https://127.0.0.1').split(' ')
 
-STATIC_URL = 'static/'
+
 
 DATABASES = {
     'default': {
