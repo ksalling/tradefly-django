@@ -16,7 +16,7 @@ DATABASES = {
         'USER': 'tradefly',
         'PASSWORD': '6817*erxesAve',
         'HOST': 'tradefly-tradefly-6oc18b',
-        'PORT': 5432,
+        'PORT': '5432',
     }
 }
 
