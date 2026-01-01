@@ -14,7 +14,7 @@ DATABASES = {
     'default': dj_database_url.parse(config('DATABASE_URL'))
 }
 
-STATIC_ROOT = BASE_DIR / "django_project/static"
+STATIC_URL = 'django_projectstatic/'
 
 #DATABASES = {
 #    'default': {
