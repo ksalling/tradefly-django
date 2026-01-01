@@ -8,7 +8,7 @@ DEBUG = True
 SECRET_KEY = "django-insecure-w#8yes#)v!3j3%-_5lzq#)ovvaw$wy8o%+orb0d68n!41b%7kb"
 
 ALLOWED_HOSTS = ["*"]
-CSRF_TRUSTED_ORIGINS = "http://localhost:8282"
+CSRF_TRUSTED_ORIGINS = ['http://*.traefik.me/', 'http://*.halfdine.com', 'https://*.halfdine.com']
 
 DATABASES = {
     'default': dj_database_url.parse(config('DATABASE_URL'))
