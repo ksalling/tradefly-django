@@ -11,7 +11,7 @@ CSRF_TRUSTED_ORIGINS = "http://localhost:8000"
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'tf',
         'USER': 'tradefly',
         'PASSWORD': '6817*erxesAve',

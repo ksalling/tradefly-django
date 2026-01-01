@@ -101,6 +101,8 @@ protobuf==5.29.5
     #   proto-plus
 psycopg==3.3.2
     # via django-project (pyproject.toml)
+psycopg2-binary==2.9.11
+    # via django-project (pyproject.toml)
 pyasn1==0.6.1
     # via
     #   pyasn1-modules
