@@ -7,7 +7,8 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # Development-specific settings
 DEBUG = os.getenv('DEBUG')
 
-ALLOWED_HOSTS = ['.halfdine.com', '.traefik.me', 'tradefly-tradeflydjango-otrt2b']
+ALLOWED_HOSTS = ['*']
+#LLOWED_HOSTS = ['.halfdine.com', '.traefik.me', 'tradefly-tradeflydjango-otrt2b']
 CSRF_TRUSTED_ORIGINS = ['http://*.traefik.me/', 'http://*.halfdine.com', 'https://*.halfdine.com']
 
 DATABASES = {
