@@ -14,8 +14,7 @@ ALLOWED_HOSTS = [
     'localhost', 
     '127.0.0.1', 
     'tradefly-tradeflydjango-otrt2b', 
-    'tradefly-tradeflydjango-otrt2b.1.pmn20jqftwm38au3hbxuexnva',
-    '10.0.1.74'
+    'tradefly-tradeflydjango-otrt2b.1.pmn20jqftwm38au3hbxuexnva'
     ]
 CSRF_TRUSTED_ORIGINS = ['http://*.traefik.me/', 'http://*.halfdine.com', 'https://*.halfdine.com']
 
