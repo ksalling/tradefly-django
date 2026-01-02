@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv # type: ignore
 from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -10,6 +12,8 @@ from api.includes.gemini import generate_prompt, call_gemini_api, save_signal_fr
 import json
 
 import logging
+
+load_dotenv()
 
 # Get an instance of a logger for the current module
 logger = logging.getLogger(__name__)
@@ -185,7 +189,7 @@ class BanditMessages(APIView):
     """
     def post(self, request, format=None):
         logger.info(f"Received message from Bandit bot for channel: {request.data.get('channel_name')}")
-        logger.debug(f"Data received: {request.data}")
+        #logger.debug(f"Data received: {request.data}")
         
         serializer = BanditMessageSerializer(data=request.data)
 
