@@ -119,4 +119,3 @@ node_modules/
 
 uv.lock
 .python-version
-django_project/settings/dev.py
