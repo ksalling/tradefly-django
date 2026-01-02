@@ -187,6 +187,8 @@ class BanditMessages(APIView):
         logger.info(f"Received message from Bandit bot for channel: {request.data.get('channel_name')}")
         
         serializer = BanditMessageSerializer(data=request.data)
+
+        channels_to_process = os.getenv("CHANNELS_TO_PROCESS").split(',')
         
         if serializer.is_valid():
             try:
@@ -194,6 +196,7 @@ class BanditMessages(APIView):
                 logger.info(f"Successfully saved message for channel ID: {serializer.data.get('channel_id')}")
                 
                 channel_name = request.data.get('channel_name')
+                channel_id = request.data.get('channel_id')
                 message_content = request.data.get('message')
 
                 if channel_name in ["HRJ", "FJ"]:
