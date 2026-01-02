@@ -70,11 +70,7 @@ WSGI_APPLICATION = 'django_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-load_dotenv(find_dotenv())
 
-DATABASES = {
-    'default': dj_database_url.config(default='postgres://postgres:postgres@localhost:5432/postgres')
-}
 
 
 #DATABASES = {
