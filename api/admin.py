@@ -15,6 +15,8 @@ from .models import (
     FJTakeProfitTrade,
     BanditMessages,
     SignalTrigger,
+    SIGSCANDiscordSignal,
+    SIGSCANTakeProfitTrade
 )
 
 # Change the default Django admin site headers and titles
@@ -45,6 +47,17 @@ class FJDiscordSignalsAdmin(admin.ModelAdmin):
     list_display = ('id', 'strategy', 'asset', 'trade_type', 'entry_price', 'entry_order_type', 'stop_loss')
     list_filter = ('trade_type', 'asset')
     inlines = [FJTakeProfitTradesInline]
+
+class SIGSCANTakeProfitTradesInline(admin.TabularInline):
+    model = SIGSCANTakeProfitTrade
+    extra = 1
+
+
+@admin.register(SIGSCANDiscordSignal)
+class SIGSCANDiscordSignalsAdmin(admin.ModelAdmin):
+    list_display = ('id', 'strategy', 'asset', 'trade_type', 'entry_price', 'entry_order_type', 'stop_loss')
+    list_filter = ('trade_type', 'asset')
+    inlines = [SIGSCANTakeProfitTradesInline]
 
 
 @admin.register(BlogPost)
