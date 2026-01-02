@@ -7,9 +7,9 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # Development-specific settings
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['django.bandit.halfdine.com', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['*.halfdine.com', '*.traefik.me']
 CSRF_TRUSTED_ORIGINS = ['http://*.traefik.me/', 'http://*.halfdine.com', 'https://*.halfdine.com']
 
 DATABASES = {
