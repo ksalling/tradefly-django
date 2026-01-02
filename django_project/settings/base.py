@@ -12,32 +12,16 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import dj_database_url
 from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Create logs directory
-LOGS_DIR = os.path.join(BASE_DIR.parent, 'logs')
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
 os.makedirs(LOGS_DIR, exist_ok=True)
-
-# Load environment variables from .env file
-
-load_dotenv(BASE_DIR / '.env')
-
-#DJANGO_CRYPTO_FIELDS_KEY_PATH = BASE_DIR / 'crypto'
-#DJANGO_CRYPTO_FIELDS_KEY_PATH = '/home/kyle/crypto'
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
-
-
-
-
-
-
 
 # Application definition
 
@@ -86,6 +70,13 @@ WSGI_APPLICATION = 'django_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+load_dotenv(find_dotenv())
+
+DATABASES = {
+    'default': dj_database_url.config(default='postgres://postgres:postgres@localhost:5432/postgres')
+}
+
+
 #DATABASES = {
 #    'default': {
 #        'ENGINE': 'django.db.backends.sqlite3',
@@ -131,11 +122,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-SUPER_BASE_DIR = BASE_DIR.parent
-
-STATIC_ROOT = SUPER_BASE_DIR / "static"
 STATIC_URL = 'static/'
-
+STATIC_ROOT = BASE_DIR / "static"
 
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
