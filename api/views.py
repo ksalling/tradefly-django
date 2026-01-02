@@ -199,7 +199,7 @@ class BanditMessages(APIView):
                 channel_id = request.data.get('channel_id')
                 message_content = request.data.get('message')
 
-                if channel_name in ["HRJ", "FJ"]:
+                if channel_id in channels_to_process:
                     logger.info(f"Processing message from '{channel_name}' channel with Gemini.")
                     prompt = generate_prompt(channel_name, message_content)
                     gemini_response = call_gemini_api(prompt)
