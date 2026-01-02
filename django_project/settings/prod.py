@@ -8,7 +8,15 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG')
 
 #ALLOWED_HOSTS = ['*']
-ALLOWED_HOSTS = ['.halfdine.com', '.traefik.me', 'localhost', '127.0.0.1', 'tradefly-tradeflydjango-otrt2b']
+ALLOWED_HOSTS = [
+    '.halfdine.com', 
+    '.traefik.me', 
+    'localhost', 
+    '127.0.0.1', 
+    'tradefly-tradeflydjango-otrt2b', 
+    'tradefly-tradeflydjango-otrt2b.1.pmn20jqftwm38au3hbxuexnva',
+    '10.0.1.74'
+    ]
 CSRF_TRUSTED_ORIGINS = ['http://*.traefik.me/', 'http://*.halfdine.com', 'https://*.halfdine.com']
 
 DATABASES = {
