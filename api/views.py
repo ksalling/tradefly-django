@@ -185,6 +185,7 @@ class BanditMessages(APIView):
     """
     def post(self, request, format=None):
         logger.info(f"Received message from Bandit bot for channel: {request.data.get('channel_name')}")
+        logger.debug(f"Data received: {request.data}")
         
         serializer = BanditMessageSerializer(data=request.data)
 
