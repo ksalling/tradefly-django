@@ -51,7 +51,8 @@ RUN chmod +rx  /app/entrypoint.prod.sh
 USER appuser
  
 # Expose the application port
-EXPOSE 8000 
+EXPOSE 8282
+#EXPOSE 80
 
 # Start the application using Gunicorn
 CMD ["/app/entrypoint.prod.sh"]
