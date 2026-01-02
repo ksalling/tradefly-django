@@ -9,7 +9,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # Development-specific settings
 DEBUG = True
 
-ALLOWED_HOSTS = ['*.halfdine.com', '*.traefik.me']
+ALLOWED_HOSTS = ['.halfdine.com', '.traefik.me']
 CSRF_TRUSTED_ORIGINS = ['http://*.traefik.me/', 'http://*.halfdine.com', 'https://*.halfdine.com']
 
 DATABASES = {
