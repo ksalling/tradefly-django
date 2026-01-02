@@ -9,4 +9,5 @@ urlpatterns = [
     path("processTradingViewSignal/", views.ProcessTradingViewSignal.as_view(), name="process-tradingview-signal"),
     path("callGeminiApi/", views.callGeminiApi.as_view(), name="call-gemini-api"), #sunset
     path("banditMessages/", views.BanditMessages.as_view(), name="bandit-messages"), #add authentication
+    path("banditTest/", views.BanditTest.as_view(), name="bandit-test"),
 ]

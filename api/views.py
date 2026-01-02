@@ -214,3 +214,13 @@ class BanditMessages(APIView):
         
         logger.warning(f"Invalid data received for Bandit message: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class BanditTest(APIView):
+    """
+    Receives an API call and sends back a response to test connectivity.
+    """
+    def get(self, request, format=None):
+        return Response({"status": "success", "message": "Connection established."}, status=status.HTTP_200_OK)
+
+    def post(self, request, format=None):
+        return Response({"status": "success", "message": "Connection established.", "data_received": request.data}, status=status.HTTP_200_OK)
