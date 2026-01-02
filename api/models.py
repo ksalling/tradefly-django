@@ -226,6 +226,21 @@ class FJDiscordSignal(models.Model):
     def __str__(self):
         return f"{self.asset} {self.trade_type}"
     
+class SIGSCANDiscordSignal(models.Model):
+    strategy = models.ForeignKey(Strategy, on_delete=models.CASCADE, db_column='strategy_id', blank=True, null=True)
+    asset = models.CharField(max_length=255)
+    trade_type = models.CharField(max_length=5, choices=[('long', 'Long'), ('short', 'Short')])
+    entry_price = models.DecimalField(max_digits=20, decimal_places=10)
+    entry_order_type = models.CharField(max_length=6, choices=[('market', 'Market'), ('limit', 'Limit')])
+    stop_loss = models.DecimalField(max_digits=20, decimal_places=10)
+
+    class Meta:
+        db_table = 'sigscan_discord_signal'
+        verbose_name = "SIGSCAN Discord Signal"
+    
+    def __str__(self):
+        return f"{self.asset} {self.trade_type}"
+    
 class HRJTakeProfitTrade(models.Model):
     signal = models.ForeignKey(HRJDiscordSignal, on_delete=models.CASCADE, db_column='signal_id')
     series_num = models.IntegerField(default=1)
@@ -251,6 +266,19 @@ class FJTakeProfitTrade(models.Model):
     
     def __str__(self):
         return f"TP {self.series_num} for FJ Signal {self.signal_id}"
+
+class SIGSCANTakeProfitTrade(models.Model):
+    signal = models.ForeignKey(SIGSCANDiscordSignal, on_delete=models.CASCADE, db_column='signal_id')
+    series_num = models.IntegerField()
+    tp_price = models.DecimalField(max_digits=20, decimal_places=10)
+
+    class Meta:
+        db_table = 'sigscan_take_profit_trade'
+        verbose_name = "SIGSCAN Take Profit Trade"
+        unique_together = ('signal', 'series_num')
+    
+    def __str__(self):
+        return f"TP {self.series_num} for SIGSCAN Signal {self.signal_id}"
 
 class BanditMessages(models.Model):
     channel_id = models.CharField(max_length=255, blank=True, null=True)

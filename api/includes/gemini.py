@@ -5,7 +5,7 @@ import google.generativeai as genai
 from google.generativeai.types import generation_types
 from django.db import transaction
 
-from api.models import Strategy, HRJDiscordSignal, HRJTakeProfitTrade, FJDiscordSignal, FJTakeProfitTrade
+from api.models import Strategy, HRJDiscordSignal, HRJTakeProfitTrade, FJDiscordSignal, FJTakeProfitTrade, SIGSCANDiscordSignal, SIGSCANTakeProfitTrade
 #from dotenv import load_dotenv
 
 # -------------------------------------------------------------------------
@@ -163,6 +163,75 @@ false
 ### INPUT MESSAGE TO PROCESS:
 """
 
+SIGSCAN_TEMPLATE = """
+You are a trading signal parser. Your goal is to extract structured JSON data from Discord messages based on specific Django models.
+Note: Inputs may use commas (,) for decimals. You must convert these to dots (.) for the JSON output.
+
+### INSTRUCTIONS:
+1. Analyze the "INPUT MESSAGE" below.
+2. Determine if it is a valid trading signal based on the examples provided.
+3. If it is NOT a signal (e.g., status updates, chat, target hit notifications), output exactly the string: "false".
+4. If it IS a signal, output valid JSON matching the schema below.
+5. Do not include markdown formatting (like ```json) in your response.
+
+### DJANGO MODELS REFERENCE:
+class SIGSCANDiscordSignals(models.Model):
+    strategy = models.ForeignKey(Strategy, on_delete=models.CASCADE, db_column='strategy_id', blank=True, null=True)
+    asset = models.CharField(max_length=255)
+    trade_type = models.CharField(max_length=5, choices=[('long', 'Long'), ('short', 'Short')])
+    entry_price = models.DecimalField(max_digits=20, decimal_places=10)
+    entry_order_type = models.CharField(max_length=6, choices=[('market', 'Market'), ('limit', 'Limit')])
+    stop_loss = models.DecimalField(max_digits=20, decimal_places=10)
+class SIGSCANTakeProfitTrades(models.Model):
+    signal = models.ForeignKey(SIGSCANDiscordSignals, on_delete=models.CASCADE, db_column='signal_id')
+    series_num = models.IntegerField()
+    tp_price = models.DecimalField(max_digits=20, decimal_places=10)
+
+### FEW-SHOT EXAMPLES:
+
+VIRTUAL/USDT 4h (SHORT)  |  Confluence 76/100  |  R:R 3.87
+Reasons: Supply anchored at swing high; Supply reaction + reject; Liquidity sweep (buy-side) + reject; Structure weakening (close < EMA50); Compression (BBW low); Displacement present
+
+VIRTUAL/USDT (SHORT)
+Leverage: 5X
+Risk (Entry→SL): 0.9%  |  Suggested: 6X
+Entry: 0.722 (limit order)
+TP1: 0.697
+TP2: 0.693
+TP3: 0.689
+TP4: 0.688
+SL: 0.728
+R:R: 3.87
+
+Image: tradefly_out/VIRTUAL_USDT_4h_SHORT.png
+
+Output:
+{
+  "SIGSCANDiscordSignals": {
+    "asset": "VIRTUALUSDT",
+    "trade_type": "short",
+    "entry_price": 0.722,
+    "entry_order_type": "limit",
+    "stop_loss": 0.728
+  },
+  "SIGSCANTakeProfitTrades": [
+    { "series_num": 1, "tp_price": 0.697 },
+    { "series_num": 2, "tp_price": 0.693 },
+    { "series_num": 3, "tp_price": 0.689 },
+    { "series_num": 4, "tp_price": 0.688 }
+  ]
+}
+
+Example 2 (Non-Signal):
+Input:
+TP 1 was reached @Brigade ⚔️
+
+Output:
+false
+
+### INPUT MESSAGE TO PROCESS:
+"""
+
 # -------------------------------------------------------------------------
 # FUNCTIONS
 # -------------------------------------------------------------------------
@@ -175,8 +244,10 @@ def generate_prompt(signal_type: str, message_content: str) -> str:
         return HRJ_TEMPLATE + f"\n{message_content}"
     elif signal_type.upper() == "FJ":
         return FJ_TEMPLATE + f"\n{message_content}"
+    elif signal_type.upper() == "SIGSCAN":
+        return SIGSCAN_TEMPLATE + f"\n{message_content}"
     else:
-        raise ValueError("Invalid signal_type. Must be 'HRJ' or 'FJ'.")
+        raise ValueError("Invalid signal_type. Must be 'HRJ' or 'FJ' or 'SIGSCAN'.")
 
 def call_gemini_api(prompt: str):
     """
