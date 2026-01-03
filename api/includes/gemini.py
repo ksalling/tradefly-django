@@ -340,6 +340,21 @@ def save_signal_from_gemini_response(signal_data: dict, signal_type: str):
 
             logger.info(f"Successfully created FJ Signal {signal.id} for strategy '{strategy.name}'.")
             return signal
+            
+        elif signal_type.upper() == "SIGSCAN":
+            main_signal_data = signal_data.get("SIGSCANDiscordSignals", {})
+            take_profit_data = signal_data.get("SIGSCANTakeProfitTrades", [])
+
+            if not main_signal_data:
+                raise ValueError("SIGSCANDiscordSignals key not found in response.")
+
+            signal = SIGSCANDiscordSignal.objects.create(strategy=strategy, **main_signal_data)
+
+            for tp in take_profit_data:
+                SIGSCANTakeProfitTrade.objects.create(signal=signal, **tp)
+
+            logger.info(f"Successfully created SIGSCAN Signal {signal.id} for strategy '{strategy.name}'.")
+            return signal
 
     except Exception as e:
         logger.error(f"Error saving signal data to database: {e}", exc_info=True)
