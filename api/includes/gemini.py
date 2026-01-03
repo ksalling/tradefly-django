@@ -304,8 +304,8 @@ def save_signal_from_gemini_response(signal_data: dict, signal_type: str):
         The created signal object or None on error.
     """
     try:
-        # Look up the strategy using the new ForeignKey relationship.
-        strategy = Strategy.objects.get(signal_trigger__name=signal_type.lower())
+        # Look up the strategy by name
+        strategy = Strategy.objects.get(name=signal_type.upper())
     except Strategy.DoesNotExist:
         logger.error(f"No strategy found linked to a SignalTrigger with name='{signal_type.lower()}''.")
         return None
@@ -340,7 +340,7 @@ def save_signal_from_gemini_response(signal_data: dict, signal_type: str):
 
             logger.info(f"Successfully created FJ Signal {signal.id} for strategy '{strategy.name}'.")
             return signal
-            
+
         elif signal_type.upper() == "SIGSCAN":
             main_signal_data = signal_data.get("SIGSCANDiscordSignals", {})
             take_profit_data = signal_data.get("SIGSCANTakeProfitTrades", [])
