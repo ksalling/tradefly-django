@@ -86,9 +86,9 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(UserApi)
 class UserApiAdmin(admin.ModelAdmin):
-    list_display = ('id', 'auth_user', 'exchange')
+    list_display = ('id', 'name', 'auth_user', 'exchange')
     list_filter = ('exchange',)
-    search_fields = ('auth_user__username',)
+    search_fields = ('name', 'auth_user__username')
 
 @admin.register(Signal)
 class SignalAdmin(admin.ModelAdmin):

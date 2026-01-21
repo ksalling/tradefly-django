@@ -85,6 +85,7 @@ class UserProfile(models.Model):
 
 
 class UserApi(models.Model):
+    name = models.CharField(max_length=255, blank=True, null=True)
     auth_user = models.ForeignKey(auth_user, on_delete=models.CASCADE, db_column='auth_user_id', blank=True, null=True)
     exchange = models.ForeignKey(SupportedExchange, on_delete=models.CASCADE, db_column='exchange_id', blank=True, null=True)
     #api_key = EncryptedTextField(max_length=255, null=True)
@@ -97,6 +98,8 @@ class UserApi(models.Model):
         verbose_name = "User API Credential"
 
     def __str__(self):
+        if self.name:
+            return f"{self.name} ({self.auth_user.username if self.auth_user else 'No User'} - {self.exchange.name if self.exchange else 'No Exchange'})"
         if self.auth_user and self.exchange:
             return f"{self.auth_user.username} - {self.exchange.name}"
         return f"UserApi {self.id}"
