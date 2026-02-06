@@ -9,6 +9,7 @@ from .models import BlogPost, Signal, HRJDiscordSignal, FJDiscordSignal
 from .serializers import BlogPostSerializer, SignalSerializer, BanditMessageSerializer
 from api.services import createBlogPost, processTradingViewSignal, DuplicateSignalError, StrategyNotFoundError, NoSubscribersError
 from api.includes.gemini import generate_prompt, call_gemini_api, save_signal_from_gemini_response
+from api.includes.bitunix import get_account, get_account_history
 import json
 
 import logging
@@ -182,6 +183,24 @@ class callGeminiApi(APIView):
 
 
         return Response({"status": "success", "message": "Signal processed successfully."}, status=status.HTTP_200_OK)
+
+class GetBitunixAccount(APIView):
+    def get(self, request, format=None):
+        user_api_id = request.query_params.get('user_api_id')
+        if not user_api_id:
+            return Response({"error": "user_api_id query parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        data = get_account(user_api_id)
+        return Response(data, status=status.HTTP_200_OK)
+
+class GetBitunixAccountHistory(APIView):
+    def get(self, request, format=None):
+        user_api_id = request.query_params.get('user_api_id')
+        if not user_api_id:
+            return Response({"error": "user_api_id query parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        data = get_account_history(user_api_id)
+        return Response(data, status=status.HTTP_200_OK)
 
 class BanditMessages(APIView):
     """

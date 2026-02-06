@@ -10,4 +10,7 @@ urlpatterns = [
     path("callGeminiApi/", views.callGeminiApi.as_view(), name="call-gemini-api"), #sunset
     path("banditMessages/", views.BanditMessages.as_view(), name="bandit-messages"), #add authentication
     path("banditTest/", views.BanditTest.as_view(), name="bandit-test"),
+    path("getBitunixAccount/", views.GetBitunixAccount.as_view(), name="get-bitunix-account"),
+    #path("getBitunixAccount/<int:user_api_id>/", views.GetBitunixAccount.as_view(), name="get-bitunix-account"),
+    path("getBitunixAccountHistory/", views.GetBitunixAccountHistory.as_view(), name="get-bitunix-account-history"),
 ]
