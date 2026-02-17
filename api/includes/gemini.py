@@ -5,7 +5,8 @@ import google.generativeai as genai
 from google.generativeai.types import generation_types
 from django.db import transaction
 
-from api.models import Strategy, HRJDiscordSignal, HRJTakeProfitTrade, FJDiscordSignal, FJTakeProfitTrade, SIGSCANDiscordSignal, SIGSCANTakeProfitTrade
+from api.models import Strategy, HRJDiscordSignal, HRJTakeProfitTrade, FJDiscordSignal, FJTakeProfitTrade, SIGSCANDiscordSignal, SIGSCANTakeProfitTrade, StrategySubscription, UserApi
+import boto3
 #from dotenv import load_dotenv
 
 # -------------------------------------------------------------------------
@@ -324,7 +325,7 @@ def save_signal_from_gemini_response(signal_data: dict, signal_type: str):
                 HRJTakeProfitTrade.objects.create(signal=signal, **tp)
             
             logger.info(f"Successfully created HRJ Signal {signal.id} for strategy '{strategy.name}'.")
-            return signal
+            return strategy, signal
 
         elif signal_type.upper() == "FJ":
             main_signal_data = signal_data.get("FJDiscordSignals", {})
@@ -339,7 +340,7 @@ def save_signal_from_gemini_response(signal_data: dict, signal_type: str):
                 FJTakeProfitTrade.objects.create(signal=signal, **tp)
 
             logger.info(f"Successfully created FJ Signal {signal.id} for strategy '{strategy.name}'.")
-            return signal
+            return strategy, signal
 
         elif signal_type.upper() == "SIGSCAN":
             main_signal_data = signal_data.get("SIGSCANDiscordSignals", {})
@@ -354,9 +355,185 @@ def save_signal_from_gemini_response(signal_data: dict, signal_type: str):
                 SIGSCANTakeProfitTrade.objects.create(signal=signal, **tp)
 
             logger.info(f"Successfully created SIGSCAN Signal {signal.id} for strategy '{strategy.name}'.")
-            return signal
+            return strategy, signal
 
     except Exception as e:
         logger.error(f"Error saving signal data to database: {e}", exc_info=True)
         # The @transaction.atomic decorator will automatically roll back the transaction on exception.
         return None
+
+def format_bitunix_payload(signal, user_api, subscription):
+    """
+    Formats the order payload for BitUnix batch orders.
+    API Reference: https://openapidoc.bitunix.com/doc/trade/batch_order.html
+    """
+    # 1. Symbol Mapping
+    # BitUnix uses standard symbols without '/' usually, e.g. BTCUSDT
+    symbol = signal.asset.replace('/', '').upper()
+    
+    # 2. Side Mapping
+    # Signal trade_type is 'long' or 'short'
+    # BitUnix uses 'BUY' or 'SELL' in the side field
+    side = 'BUY' if signal.trade_type.lower() == 'long' else 'SELL'
+    
+    # 3. Quantity Placeholder
+    # We do not have user balance here to calculate position size.
+    # We will use a placeholder or derived value.
+    # If subscription has portfolio_percentage, we pass that for the consumer to handle.
+    # But batch order requires 'qty'. We'll use a string placeholder "{qty}" to indicate
+    # the consumer must fill this.
+    qty_placeholder = "{qty}" 
+    
+    # 4. Entry Order
+    entry_order = {
+        "side": side,
+        "price": str(signal.entry_price),
+        "qty": qty_placeholder,
+        "orderType": "LIMIT",
+        "reduceOnly": False,
+        "effect": "GTC",
+        # Including SL in the main order directly if supported by BitUnix for the position
+        # The docs show 'slPrice', 'slStopType', 'slOrderType' in the order object.
+        "slPrice": str(signal.stop_loss),
+        "slStopType": "MARK", # Assuming MARK price for triggers is standard/safer
+        "slOrderType": "MARKET" # Market stop is standard for SL
+    }
+    
+    orders = [entry_order]
+    
+    # 5. Take Profit Orders
+    # We need to find the TP trades associated with this signal.
+    # The signal object passed here is the Django model instance.
+    # We need to access the related TakeProfitTrade objects.
+    
+    # Determine the reverse side for TPs
+    tp_side = 'SELL' if side == 'BUY' else 'BUY'
+    
+    # Access TPs based on signal type
+    # We can try to dynamically get the related manager or check the type
+    tps = []
+    if isinstance(signal, HRJDiscordSignal):
+        tps = list(signal.hrjtakeprofittrade_set.all())
+    elif isinstance(signal, FJDiscordSignal):
+        tps = list(signal.fjtakeprofittrade_set.all())
+    elif isinstance(signal, SIGSCANDiscordSignal):
+        tps = list(signal.sigscantakeprofittrade_set.all())
+        
+    # Sort TPs by price? Usually good to be ordered.
+    tps.sort(key=lambda x: x.series_num)
+    
+    num_tps = len(tps)
+    if num_tps > 0:
+        # We need to split the entry quantity among TPs.
+        # Since we use a placeholder for total qty, we can express TP qty as fraction?
+        # BitUnix requires absolute number.
+        # We'll use a string "{qty_tp_1}", "{qty_tp_2}" etc or "{qty} * 0.25"
+        # Let's use a clear placeholder string the consumer can parse.
+        # E.g. "25%"
+        
+        # Determine split (equal split for simplicity unless specified)
+        # If 4 TPs, 25% each.
+        percentage = 1.0 / num_tps
+        
+        for i, tp in enumerate(tps):
+            tp_order = {
+                "side": tp_side,
+                "price": str(tp.tp_price),
+                "qty": f"{{qty}} * {percentage:.2f}", # Placeholder expression
+                "orderType": "LIMIT",
+                "reduceOnly": True, # Important for TP to close position
+                "effect": "GTC"
+            }
+            orders.append(tp_order)
+
+    # 6. Construct Final Payload
+    payload = {
+        "symbol": symbol,
+        "orderList": orders,
+        # API requires nonce, timestamp, sign, api-key in HEADERS, not body usually?
+        # The doc shows --data '{"symbol":..., "orderList":...}'
+        # So the body is just symbol and orderList.
+    }
+    
+    return payload
+
+def format_default_payload(signal, user_api, subscription):
+    """
+    Generic payload format for unspecified exchanges.
+    """
+    return {
+        "strategy": signal.strategy.name if signal.strategy else "Unknown",
+        "signal_id": signal.id,
+        "user_api_valid": bool(user_api),
+        "order": {
+            "asset": signal.asset,
+            "side": signal.trade_type.upper(),
+            "type": signal.entry_order_type.upper(),
+            "price": str(signal.entry_price),
+            "stop_loss": str(signal.stop_loss),
+            "leverage": getattr(signal, 'leverage', 1)
+        }
+    }
+
+def process_and_dispatch_signal(strategy, signal_obj):
+    """
+    Looks up active strategy subscriptions, fetches UserApi info, formats orders,
+    and dispatches them to the user's SQS queue.
+    """
+    logger.info(f"Processing signal dispatch for strategy: {strategy.name}, Signal ID: {signal_obj.id}")
+
+    try:
+        subscriptions = StrategySubscription.objects.filter(strategy=strategy, status='Active')
+        
+        if not subscriptions.exists():
+            logger.info(f"No active subscriptions found for strategy '{strategy.name}'.")
+            return
+
+        sqs = boto3.client('sqs', region_name='us-east-1')
+
+        for sub in subscriptions:
+            try:
+                user_api = sub.user_api
+                if not user_api:
+                    logger.warning(f"Subscription {sub.id} has no linked UserApi. Skipping.")
+                    continue
+
+                # Determine formatting function based on exchange
+                exchange_name = user_api.exchange.name.lower() if user_api.exchange and user_api.exchange.name else ""
+                
+                if "bitunix" in exchange_name:
+                    order_payload = format_bitunix_payload(signal_obj, user_api, sub)
+                else:
+                    order_payload = format_default_payload(signal_obj, user_api, sub)
+                
+                # Wrap in the dispatch envelope
+                payload = {
+                    "strategy": strategy.name,
+                    "signal_id": signal_obj.id,
+                    "user_api": {
+                        "api_key": user_api.api_key,
+                        "api_secret": user_api.api_secret,
+                        "exchange": user_api.exchange.name if user_api.exchange else None,
+                        "name": user_api.name
+                    },
+                    "order_message": order_payload
+                }
+
+                # Construct Queue URL
+                queue_name_suffix = user_api.name if user_api.name else f"user_{user_api.auth_user.id}"
+                queue_url = f"https://sqs.us-east-1.amazonaws.com/531367011239/{queue_name_suffix}_Queue"
+
+                logger.info(f"Sending order to SQS: {queue_url}")
+                
+                response = sqs.send_message(
+                    QueueUrl=queue_url,
+                    MessageBody=json.dumps(payload)
+                )
+                
+                logger.info(f"Message sent to SQS for user {user_api.name}. MessageId: {response.get('MessageId')}")
+
+            except Exception as e:
+                logger.error(f"Error processing subscription {sub.id}: {e}", exc_info=True)
+
+    except Exception as e:
+        logger.error(f"Error in process_and_dispatch_signal: {e}", exc_info=True)
