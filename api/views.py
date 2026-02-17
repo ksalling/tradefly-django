@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer
 from .models import BlogPost, Signal, HRJDiscordSignal, FJDiscordSignal
 from .serializers import BlogPostSerializer, SignalSerializer, BanditMessageSerializer
-from api.services import createBlogPost, processTradingViewSignal, DuplicateSignalError, StrategyNotFoundError, NoSubscribersError
+from api.services import processTradingViewSignal, DuplicateSignalError, StrategyNotFoundError, NoSubscribersError
 from api.includes.gemini import generate_prompt, call_gemini_api, save_signal_from_gemini_response
 from api.includes.bitunix import get_account, get_account_history
 import json
@@ -21,53 +21,56 @@ logger = logging.getLogger(__name__)
 
 # Create your views here.
 
-#sunset 
-class BlogPostListCreate(generics.ListCreateAPIView):
-    queryset = BlogPost.objects.all()
-    serializer_class = BlogPostSerializer
+# #sunset 
+# class BlogPostListCreate(generics.ListCreateAPIView):
+#     queryset = BlogPost.objects.all()
+#     serializer_class = BlogPostSerializer
 
-    def delete(self, request, *args, **kwargs):
-        BlogPost.objects.all().delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+#     def delete(self, request, *args, **kwargs):
+#         BlogPost.objects.all().delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
 
-#sunset
-class BlogPostRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    queryset = BlogPost.objects.all()
-    serializer_class = BlogPostSerializer
-    lookup_field = 'pk'
+# #sunset
+# class BlogPostRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = BlogPost.objects.all()
+#     serializer_class = BlogPostSerializer
+#     lookup_field = 'pk'
 
-#sunset
-class BlogPostList(APIView):
-    def get(self, request, format=None):
-        #get title from he query parameters
-        title = request.query_params.get('title', '')
+# #sunset
+# class BlogPostList(APIView):
+#     def get(self, request, format=None):
+#         #get title from he query parameters
+#         title = request.query_params.get('title', '')
 
-        if title:
-            #filter the queryset based on the title
-            blog_posts = BlogPost.objects.filter(title__icontains=title)
-        else:
-            # if no title is provided, return all blog posts
-            blog_posts = BlogPost.objects.all()
+#         if title:
+#             #filter the queryset based on the title
+#             blog_posts = BlogPost.objects.filter(title__icontains=title)
+#         else:
+#             # if no title is provided, return all blog posts
+#             blog_posts = BlogPost.objects.all()
 
-        serializer = BlogPostSerializer(blog_posts, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+#         serializer = BlogPostSerializer(blog_posts, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-#sunset
-class DoSomethingView(APIView):
-    def get(self, request, format=None):
-        logger.info("A user is accessing the DoSomethingView get method.")
-        somevar = createBlogPost()
-        html = '<html lang="en"><body> this is something %s.</body></html>' % request
-        return Response(html, status=status.HTTP_200_OK)
+# #sunset
+# class DoSomethingView(APIView):
+#     def get(self, request, format=None):
+#         logger.info("A user is accessing the DoSomethingView get method.")
+#         somevar = createBlogPost()
+#         html = '<html lang="en"><body> this is something %s.</body></html>' % request
+#         return Response(html, status=status.HTTP_200_OK)
 
-    def post(self, request, format=None):
-        somevar = createBlogPost()
-        html = '<html lang="en"><body> this is something %s.</body></html>' % request.data
-        return Response(html, status=status.HTTP_200_OK)
+#     def post(self, request, format=None):
+#         somevar = createBlogPost()
+#         html = '<html lang="en"><body> this is something %s.</body></html>' % request.data
+#         return Response(html, status=status.HTTP_200_OK)
 
 
 class ProcessTradingViewSignal(APIView):
+    """
+    Endpoint to receive and process webhook signals from TradingView.
+    """
     # By default, DRF includes the BrowsableAPIRenderer which creates the HTML page.
     # To disable it for this specific webhook endpoint, we explicitly set the
     # renderer to only handle JSON.
@@ -116,75 +119,78 @@ class ProcessTradingViewSignal(APIView):
 
 
 
-#sunset
-class callGeminiApi(APIView):
-    def get(self, request, format=None):
+# #sunset
+# class callGeminiApi(APIView):
+#     def get(self, request, format=None):
 
-        # Example 1: HRJ Signal
-        hrj_message = """
-        SOL/USDT (LONG)
-        Leverage: 5X 
-        Balance: 3% of capital
-        Entry: 126.00 - (limit order)
-        TP1: 146.77
-        TP2: 172.55
-        SL: 105.25
-        R:R: 6
-        """
+#         # Example 1: HRJ Signal
+#         hrj_message = """
+#         SOL/USDT (LONG)
+#         Leverage: 5X 
+#         Balance: 3% of capital
+#         Entry: 126.00 - (limit order)
+#         TP1: 146.77
+#         TP2: 172.55
+#         SL: 105.25
+#         R:R: 6
+#         """
         
-        # Example 2: FJ Signal (using commas)
-        fj_message = """
-        **TRX/USDT (long)** 1d chart
+#         # Example 2: FJ Signal (using commas)
+#         fj_message = """
+#         **TRX/USDT (long)** 1d chart
 
-        Entry: 0,27434 - (limit long)
+#         Entry: 0,27434 - (limit long)
 
-        TP1: 0,2865
-        TP2: 0,3029
-        TP3: 0,3241
-        TP4: 0,3558
-        TP5: 0,3985
+#         TP1: 0,2865
+#         TP2: 0,3029
+#         TP3: 0,3241
+#         TP4: 0,3558
+#         TP5: 0,3985
 
-        SL: 0,2548
+#         SL: 0,2548
 
-        R:R: 6,40
-        <@&1354945711879491767>
-        """
+#         R:R: 6,40
+#         <@&1354945711879491767>
+#         """
 
-        # Example 3: Non-signal
-        spam_message = "✅  The first target of this BTC/USDT was reached"
+#         # Example 3: Non-signal
+#         spam_message = "✅  The first target of this BTC/USDT was reached"
 
-        print("--- Testing HRJ Signal ---")
-        prompt_hrj = generate_prompt("HRJ", hrj_message)
-        result_hrj = call_gemini_api(prompt_hrj)
-        if result_hrj:
-            print(json.dumps(result_hrj, indent=2))
-            logger.info(json.dumps(result_hrj, indent=2))
-        else:
-            print("HRJ test failed or returned no data.")
-            logger.error("HRJ test failed or returned no data.")
-
-
-        print("\n--- Testing FJ Signal ---")
-        prompt_fj = generate_prompt("FJ", fj_message)
-        result_fj = call_gemini_api(prompt_fj)
-        if result_fj:
-            print(json.dumps(result_fj, indent=2))
-            logger.info(json.dumps(result_fj, indent=2))
-        else:
-            print("FJ test failed or returned no data.")
-            logger.error("FJ test failed or returned no data.")
+#         print("--- Testing HRJ Signal ---")
+#         prompt_hrj = generate_prompt("HRJ", hrj_message)
+#         result_hrj = call_gemini_api(prompt_hrj)
+#         if result_hrj:
+#             print(json.dumps(result_hrj, indent=2))
+#             logger.info(json.dumps(result_hrj, indent=2))
+#         else:
+#             print("HRJ test failed or returned no data.")
+#             logger.error("HRJ test failed or returned no data.")
 
 
-        print("\n--- Testing Non-Signal ---")
-        prompt_spam = generate_prompt("HRJ", spam_message)
-        result_spam = call_gemini_api(prompt_spam)
-        print(result_spam)
-        logger.info(result_spam)
+#         print("\n--- Testing FJ Signal ---")
+#         prompt_fj = generate_prompt("FJ", fj_message)
+#         result_fj = call_gemini_api(prompt_fj)
+#         if result_fj:
+#             print(json.dumps(result_fj, indent=2))
+#             logger.info(json.dumps(result_fj, indent=2))
+#         else:
+#             print("FJ test failed or returned no data.")
+#             logger.error("FJ test failed or returned no data.")
 
 
-        return Response({"status": "success", "message": "Signal processed successfully."}, status=status.HTTP_200_OK)
+#         print("\n--- Testing Non-Signal ---")
+#         prompt_spam = generate_prompt("HRJ", spam_message)
+#         result_spam = call_gemini_api(prompt_spam)
+#         print(result_spam)
+#         logger.info(result_spam)
+
+
+#         return Response({"status": "success", "message": "Signal processed successfully."}, status=status.HTTP_200_OK)
 
 class GetBitunixAccount(APIView):
+    """
+    Retrieve Bitunix account details for a specific UserApi ID.
+    """
     def get(self, request, format=None):
         user_api_id = request.query_params.get('user_api_id')
         if not user_api_id:
@@ -194,6 +200,9 @@ class GetBitunixAccount(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
 class GetBitunixAccountHistory(APIView):
+    """
+    Retrieve Bitunix account history for a specific UserApi ID.
+    """
     def get(self, request, format=None):
         user_api_id = request.query_params.get('user_api_id')
         if not user_api_id:

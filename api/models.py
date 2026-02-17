@@ -10,6 +10,9 @@ auth_user = get_user_model()
 
 # Create your models here.
 class BlogPost(models.Model):
+    """
+    Model representing a blog post.
+    """
     title = models.CharField(max_length=150)
     content = models.TextField()
     published_date = models.DateTimeField(auto_now_add=True)
@@ -18,6 +21,9 @@ class BlogPost(models.Model):
         return self.title
 
 class SupportedExchange(models.Model):
+    """
+    Model representing an exchange supported by the platform (e.g., Binance, Bitunix).
+    """
     name = models.CharField(max_length=255)
 
     class Meta:
@@ -28,7 +34,11 @@ class SupportedExchange(models.Model):
         return self.name
 
 
+
 class SignalTrigger(models.Model):
+    """
+    Model defining the source or type of a signal trigger (e.g., TradingView webhook, Discord message).
+    """
     name = models.CharField(max_length=50, unique=True, help_text="The unique name for the trigger (e.g., 'hrj', 'fj', 'tradingview').")
     description = models.CharField(max_length=255, blank=True, null=True)
 
@@ -41,6 +51,10 @@ class SignalTrigger(models.Model):
         verbose_name_plural = "Signal Triggers"
 
 class Strategy(models.Model):
+    """
+    Model representing a trading strategy.
+    Strategies are linked to a SignalTrigger and are subscribed to by users.
+    """
     strategy_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50)
     description = models.TextField(blank=True, null=True)
@@ -58,6 +72,10 @@ class Strategy(models.Model):
 
 
 class UserProfile(models.Model):
+    """
+    Extended user profile model containing personal information.
+    Linked to the main Django User model.
+    """
     user_id = models.AutoField(primary_key=True)
     auth_user = models.ForeignKey(auth_user, on_delete=models.CASCADE, db_column='auth_user_id', blank=True, null=True)
     
@@ -85,6 +103,10 @@ class UserProfile(models.Model):
 
 
 class UserApi(models.Model):
+    """
+    Stores API credentials for users on supported exchanges.
+    Warning: Credentials should be encrypted.
+    """
     name = models.CharField(max_length=255, blank=True, null=True)
     auth_user = models.ForeignKey(auth_user, on_delete=models.CASCADE, db_column='auth_user_id', blank=True, null=True)
     exchange = models.ForeignKey(SupportedExchange, on_delete=models.CASCADE, db_column='exchange_id', blank=True, null=True)
@@ -106,6 +128,9 @@ class UserApi(models.Model):
 
 
 class Signal(models.Model):
+    """
+    General model for storing signals, primarily used for TradingView webhooks.
+    """
     strategy = models.ForeignKey(Strategy, on_delete=models.CASCADE, db_column='strategy_id', blank=True, null=True)
     symbol = models.CharField(max_length=255)
     side = models.CharField(max_length=255)
@@ -138,6 +163,10 @@ class Signal(models.Model):
 
 
 class StrategySubscription(models.Model):
+    """
+    Model connecting a User to a Strategy via their UserApi.
+    Controls settings like leverage, trade allocation, and status.
+    """
     STATUS_CHOICES = [
         ('Active', 'Active'),
         ('Disabled', 'Disabled'),
@@ -181,6 +210,9 @@ class StrategySubscription(models.Model):
 
 
 class UserTrade(models.Model):
+    """
+    Records executed trades for a user, linked to the original signal.
+    """
     auth_user = models.ForeignKey(auth_user, on_delete=models.RESTRICT, db_column='auth_user_id')
     signal = models.ForeignKey(Signal, on_delete=models.CASCADE, db_column='signal_id')
     
@@ -198,6 +230,9 @@ class UserTrade(models.Model):
         return f"Trade {self.id}"
 
 class HRJDiscordSignal(models.Model):
+    """
+    Signal parsed from HRJ Discord channel messages.
+    """
     strategy = models.ForeignKey(Strategy, on_delete=models.CASCADE, db_column='strategy_id', blank=True, null=True)
     asset = models.CharField(max_length=255)
     trade_type = models.CharField(max_length=5, choices=[('long', 'Long'), ('short', 'Short')])
@@ -215,6 +250,9 @@ class HRJDiscordSignal(models.Model):
         return f"{self.asset} {self.trade_type}"
 
 class FJDiscordSignal(models.Model):
+    """
+    Signal parsed from FJ Discord channel messages.
+    """
     strategy = models.ForeignKey(Strategy, on_delete=models.CASCADE, db_column='strategy_id', blank=True, null=True)
     asset = models.CharField(max_length=255)
     trade_type = models.CharField(max_length=5, choices=[('long', 'Long'), ('short', 'Short')])
@@ -230,6 +268,9 @@ class FJDiscordSignal(models.Model):
         return f"{self.asset} {self.trade_type}"
     
 class SIGSCANDiscordSignal(models.Model):
+    """
+    Signal parsed from SIGSCAN Discord channel messages.
+    """
     strategy = models.ForeignKey(Strategy, on_delete=models.CASCADE, db_column='strategy_id', blank=True, null=True)
     asset = models.CharField(max_length=255)
     trade_type = models.CharField(max_length=5, choices=[('long', 'Long'), ('short', 'Short')])
@@ -245,6 +286,9 @@ class SIGSCANDiscordSignal(models.Model):
         return f"{self.asset} {self.trade_type}"
     
 class HRJTakeProfitTrade(models.Model):
+    """
+    Take profit levels associated with an HRJ signal.
+    """
     signal = models.ForeignKey(HRJDiscordSignal, on_delete=models.CASCADE, db_column='signal_id')
     series_num = models.IntegerField(default=1)
     tp_price = models.DecimalField(max_digits=20, decimal_places=10)
@@ -258,6 +302,9 @@ class HRJTakeProfitTrade(models.Model):
         return f"TP {self.series_num} for HRJ Signal {self.signal_id}"
 
 class FJTakeProfitTrade(models.Model):
+    """
+    Take profit levels associated with a FJ signal.
+    """
     signal = models.ForeignKey(FJDiscordSignal, on_delete=models.CASCADE, db_column='signal_id')
     series_num = models.IntegerField()
     tp_price = models.DecimalField(max_digits=20, decimal_places=10)
@@ -271,6 +318,9 @@ class FJTakeProfitTrade(models.Model):
         return f"TP {self.series_num} for FJ Signal {self.signal_id}"
 
 class SIGSCANTakeProfitTrade(models.Model):
+    """
+    Take profit levels associated with a SIGSCAN signal.
+    """
     signal = models.ForeignKey(SIGSCANDiscordSignal, on_delete=models.CASCADE, db_column='signal_id')
     series_num = models.IntegerField()
     tp_price = models.DecimalField(max_digits=20, decimal_places=10)
@@ -284,6 +334,9 @@ class SIGSCANTakeProfitTrade(models.Model):
         return f"TP {self.series_num} for SIGSCAN Signal {self.signal_id}"
 
 class BanditMessages(models.Model):
+    """
+    Stores raw messages received from the Bandit bot for audit and processing.
+    """
     channel_id = models.CharField(max_length=255, blank=True, null=True)
     channel_name = models.CharField(max_length=255, blank=True, null=True)
     message = models.TextField(blank=True, null=True)
