@@ -254,10 +254,11 @@ When an LLM agent executes this rebuild, it should follow this sequence:
 ## 14. Execution Strategy for the LLM
 *To ensure a clean, efficient, and mistake-free build, the LLM and User must adhere to the following workflow:*
 
-1.  **Iterative Step-by-Step Build:** Do NOT attempt to build the entire application in a single prompt. The User should instruct the LLM to complete exactly one numbered step from Section 13 at a time.
-2.  **Test-Driven Execution:** For every step, the LLM must write the tests *first*, run them (expecting failures), write the implementation code, and then run the tests again until they pass. Do not move to the next feature until all tests for the current feature are green.
+1.  **Iterative Step-by-Step Build:** Do NOT attempt to build the entire application in a single prompt. The User should instruct the LLM to complete exactly *one* numbered step from Section 13 at a time.
+2.  **Test-Driven Execution (TDD):** For every step, the LLM must write the tests *first*, run them (expecting failures), write the implementation code, and then run the tests again until they pass. Do not move to the next feature until all tests for the current feature are green.
 3.  **Context Injection:** When implementing specific third-party integrations (TradingView, Bitunix, Gemini), the User should provide snippet examples of actual JSON payloads or API responses to the LLM to eliminate guesswork.
 4.  **Frequent Commits:** The LLM should encourage the User to commit to version control (Git) after every successful step to maintain a clean rollback point in case of AI hallucinations or errors.
+5.  **Code Neatness & Linting:** The LLM must format the code cleanly (e.g., following PEP8 for Python), use descriptive variable names, and include docstrings for all complex classes and functions.
 
 ---
 
@@ -275,6 +276,8 @@ CRITICAL RULES FOR THIS ENGAGEMENT:
 3. For every feature, you must write comprehensive unit tests *first*, run them, implement the code, and run the tests again until they pass. Do not move on until coverage is green.
 4. You have creative freedom to optimize the PostgreSQL database schema for maximum efficiency, utilizing JSONFields where appropriate for dynamic data. You do not need to strictly copy the legacy table designs.
 5. You must enforce strict Python type hinting (`typing`) and linting across the entire codebase to maintain enterprise-grade readability and stability.
+6. **Code Quality:** All code must be neat, tidy, and highly human-readable. You must include descriptive PEP-257 docstrings for all classes and functions.
+7. **Error Handling:** Never use bare `except:` clauses. Always catch specific exceptions and utilize the Logging framework (Section 11) to log the traceback with contextual data.
 
 To begin, please confirm you have read the blueprint and understand these rules. Then, list out the exact sub-tasks you will complete for Step 1 (Initial Setup & Infrastructure). Wait for my approval before executing Step 1.
 ```
