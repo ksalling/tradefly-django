@@ -221,7 +221,7 @@ class BanditMessages(APIView):
         
         serializer = BanditMessageSerializer(data=request.data)
 
-        channels_to_process = os.getenv("CHANNELS_TO_PROCESS").split(',')
+        #channels_to_process = os.getenv("CHANNELS_TO_PROCESS").split(',')
         
         if serializer.is_valid():
             try:

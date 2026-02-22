@@ -61,7 +61,7 @@ During the rebuild, ignore or remove the following dead code from the original s
 *Critical Instruction for LLM:* The LLM is encouraged to design the most effective, efficient, and normalized database schema to support these features. It **DOES NOT** need to maintain strict parity with the legacy table structures, especially considering the shift to unified dynamic models (e.g., dropping hardcoded `HRJDiscordSignal` in favor of a unified `ParsedSignal` using `JSONField`).
 
 ### User & Authentication
-*   **Extended UserProfile:** Linked to Django `User`. Contains personal info (address, phone).
+*   **Custom User Model (Email-Based):** The application must use a **Custom User Model** (subclassing `AbstractBaseUser` and `PermissionsMixin`) where the **email address is the primary login identifier**. There is NO username field. The `USERNAME_FIELD` must be set to `email`.
 *   **UserApi:** Encrypted storage for API keys (e.g., Bitunix, Binance). *Must implement proper field-level encryption (e.g., `fernet_fields`).*
 *   **SupportedExchange:** Table of allowed exchanges (e.g., "Bitunix").
 
@@ -113,7 +113,7 @@ A complete, modern web-based dashboard for End-Users and Admins.
     *   *Template Switcher:* The system must allow Admins (or Designers) to drop in *multiple* pre-built CSS/UI templates and instantaneously switch the entire application's active visual theme via a dropdown in the Admin settings.
     *   *Marketplace Integration:* The application architecture must support (via API or direct package intake) pulling themes directly from popular template marketplaces so they can be applied dynamically without touching raw code.
     *   *Designer Access:* Establish a "UI Designer" role with minimal-access dashboard permissions. This allows a designer to log in and safely edit external-facing page content, apply templates, and tweak overarching CSS designs without gaining full application or database management privileges.
-2.  **Authentication Flow:** Login, Registration, Password Reset, and **Two-Factor Authentication (2FA)** via Authenticator App (TOTP) to secure user funds/API keys.
+2.  **Authentication Flow:** Login, Registration (email-based, no username), Password Reset, and **Two-Factor Authentication (2FA)** via Authenticator App (TOTP) to secure user funds/API keys.
     *   **OAuth / Social Login:** Implement one-click registration and login via external providers. At a minimum, include **Google** and **Apple** for mass-market ease. In the context of crypto/trading, also support **Discord** (which natively aligns with the Bandit bot architecture and could automatically link their Discord ID to their account for future feature expansion).
 3.  **User Dashboard:**
     *   **Exchange Setup:** UI to add/verify (Bitunix) API keys.
@@ -235,49 +235,108 @@ The LLM must build the application using Test-Driven Development (TDD) principle
 ---
 
 ## 13. Implementation Steps for LLM Rebuild
+
+> **⚠️ MANDATORY RULE:** Each numbered step below is a **hard stop**. The LLM must complete the step, run all tests until green, then **STOP and present a summary to the User for approval** before proceeding to the next step. Under NO circumstances should the LLM autonomously chain multiple steps together.
+
 *Note: Unit testing is NOT a final step. TDD principles require that comprehensive unit tests must be written concurrently with every single numbered step below.*
 
 When an LLM agent executes this rebuild, it should follow this sequence:
-1.  **Initial Setup & Infrastructure:** Initialize Django, configure Postgres, setup OpenAPI/Swagger (`drf-spectacular`), split `dev.py`/`prod.py` settings, create `.env.example` files (with Mail & Superuser keys), and generate the Dokploy deployment and Auto-Superuser creation scripts.
-2.  **Advanced Logging & Security Integration:** Implement the foundational file-based logging system for API communications and errors. Add rate limiting, DB/Queue Health Check endpoints, and the IP allowlisting database model.
-3.  **Core Models & Subscriptions:** Build the Abstract User, UserProfile, Exchanges, UserApi, Strategy, Payment Gateways, Tier Levels, and Subscription models (incorporating the waterfall deactivation logic and custom tier rules).
-4.  **Ticketing Models:** Build the models and email parsing mechanics for the integrated support desk.
-5.  **Unified Signal & Prompt Models:** Build the dynamic `PromptTemplate`, `DiscordChannel`, and unified `ParsedSignal` architectures (replacing the hardcoded models).
-6.  **Services Layer:** Implement `services.py` containing the logic for webhooks, duplicate checking, and Bitunix payload formatting.
-7.  **Queue Layer:** Implement the abstract Queue Dispatcher with prioritized routing, failover logic, and primary/backup redundancy.
+1.  **Initial Setup & Infrastructure:** Initialize Django with a **Custom User Model (email-based login, no username)**, configure Postgres, setup OpenAPI/Swagger (`drf-spectacular`), split `dev.py`/`prod.py` settings, create `.env.example` files (with Mail & Superuser keys), and generate the Dokploy deployment (`Dockerfile`, `docker-compose.yml`, `entrypoint.sh`) and Auto-Superuser creation scripts.
+2.  **Advanced Logging & Security Foundation:** Implement the foundational rotating-file logging system for API communications and errors. Add rate limiting middleware, the `/healthz` health check endpoint, and the database-backed IP allowlisting model and admin UI.
+3.  **Core Models & Subscriptions:** Build the UserProfile, SupportedExchange, UserApi (with field-level encryption), Strategy, StrategySubscription, Payment Gateways, Tier Levels, and Subscription models (incorporating soft deletes, waterfall deactivation logic, and custom tier rules). Include the `AuditLog` model.
+4.  **Ticketing Models:** Build the SupportTicket, TicketMessage models and the email parsing mechanics (POP3/IMAP ingestion) for the integrated support desk.
+5.  **Unified Signal & Prompt Models:** Build the dynamic `PromptTemplate`, `DiscordChannel`, and unified `ParsedSignal`/`TakeProfitTarget` architectures (replacing the hardcoded models).
+6.  **Services Layer:** Implement `services.py` containing the core business logic for signal processing, webhook handling, duplicate/idempotency checking, and exchange-specific payload formatting (Bitunix futures).
+7.  **Queue Layer:** Implement the abstract Queue Dispatcher interface with prioritized routing, failover logic, primary/backup redundancy, and worker-side deduplication.
 8.  **Gemini Client:** Rebuild `gemini.py` to dynamically fetch the prompt template from the database based on the incoming channel name.
-9.  **Lambda Function Code:** Develop the standalone Python script for the AWS Lambda consumer, including the callback logic to Django. Write the AWS deployment documentation.
-10. **Frontend GUI & Auth:** Scaffold the Django views/templates for API auth, 2FA, user onboarding, live trade monitoring (WebSockets/SSE), email notifications, and the Admin statistics ledger, including Mail Settings, Strategy Management, Webhook Management, API Client Management, Subscription Gateways, User Impersonation, Audit Logs, and the Log Viewer/Ticketing Desk.
+9.  **Lambda Function Code:** Develop the standalone Python script for the AWS Lambda consumer (with exponential backoff), including the callback logic to Django's `/api/trade-callback/`. Write the complete AWS deployment documentation (IAM, SQS trigger, env vars).
+10. **Frontend: Authentication & User Onboarding:** Build the email-based Registration, Login, Password Reset pages. Implement 2FA (TOTP) enrollment and verification. Implement OAuth social login (Google, Apple, Discord). Configure PWA manifest and service worker.
+11. **Frontend: User Dashboard — Exchange & Strategy Management:** Build the Exchange Setup page (API key add/verify), the Strategy Hub (browse/subscribe), and the Subscription Management page (leverage slider, portfolio %, pause/unpause).
+12. **Frontend: User Dashboard — Trade Monitoring & Notifications:** Build the Trade History table with real-time WebSocket/SSE updates, expandable trade detail rows (entry/TP/SL status, live PnL), CSV export button, and the User Notifications Hub.
+13. **Frontend: User Support Ticketing UI:** Build the user-facing ticket submission form, ticket list view, and threaded reply interface.
+14. **Frontend: Admin Dashboard — User & Role Management:** Build the Admin User Management page with role assignment (Super Admin, Observer Admin, UI Designer), User Impersonation tool, and Pro/Lifetime access overrides.
+15. **Frontend: Admin Dashboard — Strategy, Exchange & Webhook Management:** Build the Strategy Administration panel (create/edit/deactivate with waterfall logic), Exchange toggle panel, Webhook Manager (create/disable/delete with auto-tokens), and Bandit API Client Manager.
+16. **Frontend: Admin Dashboard — Ticketing Desk & Mail Settings:** Build the admin Ticketing Desk (read/assign/respond), the email integration (reply-to ingestion), and the Global Mail Settings panel (rate limiting, outbound toggle).
+17. **Frontend: Admin Dashboard — Analytics, Logs & Trade Ledger:** Build the Advanced Analytics Rollup (PnL, trade counts, notional value), the Live Open Trades Monitor, the Global Trade Ledger with CSV export, the Audit Log viewer, and the Advanced Log Viewer (download/clear).
+18. **Frontend: Admin Dashboard — Dynamic Channels, Queues & Subscriptions:** Build the Dynamic Channel Editor (Section 5 UI), the Queue Provider admin panel (Section 6 UI), and the Subscription Tier/Payment Gateway admin panel (Section 8 UI). Implement rate limit threshold configuration UI.
+19. **Frontend: CMS & Theming Engine:** Build the lightweight CMS for marketing/landing pages, the Template Switcher (multi-theme dropdown), and the Marketplace Integration architecture for pulling external themes.
+20. **Final Integration Testing & Documentation:** Run full end-to-end integration tests across all features. Write the database backup documentation/scripts. Verify the `/healthz` endpoint works under Dokploy. Generate final OpenAPI spec. Verify >80% test coverage across all modules.
 
 ---
 
-## 14. Execution Strategy for the LLM
+## 14. Mandatory Completion Checklist
+> **⚠️ CRITICAL:** Before the LLM declares the project complete, the User must verify that EVERY item below has been implemented. If any item is missing, the LLM must go back and implement it before the project is considered done.
+
+- [ ] Custom User Model with email-based login (no username)
+- [ ] OAuth social login (Google, Apple, Discord)
+- [ ] Two-Factor Authentication (TOTP)
+- [ ] PWA manifest and service worker
+- [ ] User Dashboard: Exchange API key management
+- [ ] User Dashboard: Strategy Hub with subscribe/unsubscribe/pause
+- [ ] User Dashboard: Trade History with real-time WebSocket updates
+- [ ] User Dashboard: CSV export on trade table
+- [ ] User Dashboard: Support ticketing UI
+- [ ] User Dashboard: Notification preferences hub
+- [ ] Admin: User Management with role assignment (Super Admin / Observer / Designer)
+- [ ] Admin: User Impersonation tool
+- [ ] Admin: Strategy & Exchange administration with waterfall deactivation
+- [ ] Admin: Webhook Manager with auto-generated crypto tokens
+- [ ] Admin: Bandit API Client Manager
+- [ ] Admin: Dynamic Channel & Prompt Template Editor
+- [ ] Admin: Queue Provider configuration panel
+- [ ] Admin: Subscription Tier & Payment Gateway management
+- [ ] Admin: Integrated Ticketing Desk with email ingestion
+- [ ] Admin: Global Mail Settings (rate limiting, outbound toggle)
+- [ ] Admin: Advanced Analytics Rollup (PnL, trade counts, notional value)
+- [ ] Admin: Live Open Trades Monitor
+- [ ] Admin: Global Trade Ledger with CSV export
+- [ ] Admin: Audit Logs (who/what/when)
+- [ ] Admin: Advanced Log Viewer (view/download/clear)
+- [ ] Admin: Rate Limit threshold configuration
+- [ ] Admin: IP Allowlisting UI
+- [ ] CMS: Marketing page builder
+- [ ] CMS: Template Switcher (multi-theme)
+- [ ] CMS: Marketplace theme integration
+- [ ] Health check endpoint (`/healthz`)
+- [ ] Rotating file-based logging with critical failure alerting
+- [ ] Queue failover with deduplication
+- [ ] Soft deletes on financial models
+- [ ] Concurrency locking (`select_for_update`)
+- [ ] OpenAPI/Swagger documentation generated
+- [ ] Database backup documentation/script
+- [ ] >80% unit test coverage
+
+---
+
+## 15. Execution Strategy for the LLM
 *To ensure a clean, efficient, and mistake-free build, the LLM and User must adhere to the following workflow:*
 
 1.  **Iterative Step-by-Step Build:** Do NOT attempt to build the entire application in a single prompt. The User should instruct the LLM to complete exactly *one* numbered step from Section 13 at a time.
-2.  **Test-Driven Execution (TDD):** For every step, the LLM must write the tests *first*, run them (expecting failures), write the implementation code, and then run the tests again until they pass. Do not move to the next feature until all tests for the current feature are green.
-3.  **Context Injection:** When implementing specific third-party integrations (TradingView, Bitunix, Gemini), the User should provide snippet examples of actual JSON payloads or API responses to the LLM to eliminate guesswork.
-4.  **Frequent Commits:** The LLM should encourage the User to commit to version control (Git) after every successful step to maintain a clean rollback point in case of AI hallucinations or errors.
-5.  **Code Neatness & Linting:** The LLM must format the code cleanly (e.g., following PEP8 for Python), use descriptive variable names, and include docstrings for all complex classes and functions.
+2.  **Hard Stop After Each Step:** After completing a step and confirming all tests pass, the LLM must **STOP**, present a summary of what was built, and **wait for the User to approve** before proceeding to the next step. **NEVER auto-advance.**
+3.  **Test-Driven Execution (TDD):** For every step, the LLM must write the tests *first*, run them (expecting failures), write the implementation code, and then run the tests again until they pass. Do not move to the next feature until all tests for the current feature are green.
+4.  **Context Injection:** When implementing specific third-party integrations (TradingView, Bitunix, Gemini), the User should provide snippet examples of actual JSON payloads or API responses to the LLM to eliminate guesswork.
+5.  **Frequent Commits:** The LLM should encourage the User to commit to version control (Git) after every successful step to maintain a clean rollback point in case of AI hallucinations or errors.
+6.  **Code Neatness & Linting:** The LLM must format the code cleanly (e.g., following PEP8 for Python), use descriptive variable names, and include docstrings for all complex classes and functions.
 
 ---
 
-## 15. Master System Prompt for Rebuild
+## 16. Master System Prompt for Rebuild
 *User: Copy and paste the prompt below into a fresh LLM conversation (with a clean workspace containing this blueprint) to kick off the project effectively.*
 
 ```text
 You are an expert full-stack engineer, devops specialist, and solutions architect. Your task is to rebuild the 'Tradefly' application from scratch based on the attached `LLM_REBUILD_BLUEPRINT.md`.
 
-Before writing any code, thoroughly read the blueprint to understand the dual-environment architecture, Dokploy deployment strategy, the new dynamic models, the failover queueing system, and the strict TDD (Test-Driven Development) requirements.
+Before writing ANY code, you must thoroughly read the ENTIRE blueprint end-to-end. Pay special attention to Sections 13 (Implementation Steps), 14 (Mandatory Completion Checklist), and 15 (Execution Strategy). These sections govern how you must operate.
 
 CRITICAL RULES FOR THIS ENGAGEMENT:
-1. We will build this iteratively. DO NOT attempt to write the entire application at once.
-2. We will follow Section 13 of the blueprint exactly, step-by-step.
-3. For every feature, you must write comprehensive unit tests *first*, run them, implement the code, and run the tests again until they pass. Do not move on until coverage is green.
-4. You have creative freedom to optimize the PostgreSQL database schema for maximum efficiency, utilizing JSONFields where appropriate for dynamic data. You do not need to strictly copy the legacy table designs.
-5. You must enforce strict Python type hinting (`typing`) and linting across the entire codebase to maintain enterprise-grade readability and stability.
-6. **Code Quality:** All code must be neat, tidy, and highly human-readable. You must include descriptive PEP-257 docstrings for all classes and functions.
-7. **Error Handling:** Never use bare `except:` clauses. Always catch specific exceptions and utilize the Logging framework (Section 11) to log the traceback with contextual data.
+1. **ONE STEP AT A TIME.** We will follow Section 13 exactly. You will complete ONE numbered step, run all tests, then STOP and present a summary. You must then WAIT for my explicit approval before starting the next step. NEVER silently chain steps together. If I catch you skipping ahead, we will roll back.
+2. **TDD IS MANDATORY.** For every step, write the unit tests FIRST, run them (they should fail), write the implementation, then run the tests again until green. Every single feature must have accompanying tests.
+3. You have creative freedom to optimize the PostgreSQL database schema for maximum efficiency, utilizing JSONFields where appropriate for dynamic data. You do not need to strictly copy the legacy table designs.
+4. You must enforce strict Python type hinting (`typing`) and linting across the entire codebase to maintain enterprise-grade readability and stability.
+5. **Code Quality:** All code must be neat, tidy, and highly human-readable. You must include descriptive PEP-257 docstrings for ALL classes and functions. Follow PEP8 strictly.
+6. **Error Handling:** Never use bare `except:` clauses. Always catch specific exceptions and utilize the Logging framework (Section 11) to log the traceback with contextual data.
+7. **No Placeholders or Stubs.** Every feature you implement must be FULLY functional. Do not leave TODO comments, placeholder views, or skeleton functions. If a step says to build something, it must work end-to-end before you stop.
+8. **Completion Gate:** Before declaring the project done, you must walk through the Mandatory Completion Checklist in Section 14 item by item and confirm each is implemented. Any missing items must be built before the project is considered complete.
 
-To begin, please confirm you have read the blueprint and understand these rules. Then, list out the exact sub-tasks you will complete for Step 1 (Initial Setup & Infrastructure). Wait for my approval before executing Step 1.
+To begin, please confirm you have read the ENTIRE blueprint (all 16 sections) and understand these rules. Then, list out the exact sub-tasks you will complete for Step 1 (Initial Setup & Infrastructure). Wait for my approval before executing Step 1.
 ```
